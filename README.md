@@ -17,12 +17,15 @@ STRIP_TYPE | Organization of the NeoPixel subpixels
 
 ## API
 
+The API will send and receive a JSON-encoded body.
+
 ### `/`
 The current state of operation.
 
 Make a `PUT` request to modify the state.
 
 The only key present in each request is listed below. Other keys are dependent on which mode is set.
+
 Key |  Type | Description
 --- | --- | ---
 mode | string | The active mode
