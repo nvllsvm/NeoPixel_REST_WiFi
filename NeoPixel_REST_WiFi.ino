@@ -13,7 +13,7 @@
 #include "neopixel_config.h"
 #include "wifi_config.h"
 
-const String VERSION = "0.1.0";
+const String VERSION = "0.2.0";
 
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, STRIP_TYPE + NEO_KHZ800);
@@ -45,6 +45,7 @@ byte blue;
 byte green;
 byte white;
 byte interval;
+bool flashCycle;
 
 bool isValidBody;
 String error;
@@ -92,6 +93,17 @@ void writeStatus(WiFiClient client) {
 
         root["brightness"] = brightness;
     } else if (mode == "rainbow") {
+        root["interval"] = interval;
+        root["brightness"] = brightness;
+    } else if (mode == "flash") {
+        root["red"] = red;
+        root["green"] = green;
+        root["blue"] = blue;
+
+        if (supportsWhite) {
+            root["white"] = white;
+        }
+
         root["interval"] = interval;
         root["brightness"] = brightness;
     }
@@ -203,6 +215,32 @@ bool parseBody(String body) {
 
         if (isValidBody) { 
             mode = bodyMode;
+            interval = bodyInterval;
+            brightness = bodyBrightness;
+        }
+    } else if (bodyMode == "flash") {
+        byte bodyRed = validateIntIsByte(root, "red", 0);
+        byte bodyGreen = validateIntIsByte(root, "green", 0);
+        byte bodyBlue = validateIntIsByte(root, "blue", 0);
+        byte bodyWhite = validateIntIsByte(root, "white", 0);
+        byte bodyInterval = validateIntIsByte(root, "interval", 50);
+        byte bodyBrightness = validateIntIsByte(root, "brightness", 255);
+
+        if (isValidBody) {
+            if (bodyRed == 0 && bodyGreen == 0 && bodyBlue == 0) {
+                if (!supportsWhite || bodyWhite == 0) {
+                    isValidBody = false;
+                    error = ERROR_NO_COLOR;
+                }
+            }
+        }
+
+        if (isValidBody) {
+            mode = bodyMode;
+            red = bodyRed;
+            green = bodyGreen;
+            blue = bodyBlue;
+            white = bodyWhite;
             interval = bodyInterval;
             brightness = bodyBrightness;
         }
@@ -329,6 +367,8 @@ void setNeoPixels() {
         setAllColor(red, green, blue, white);
     } else if (mode == "rainbow") {
         setRainbow();
+    } else if (mode == "flash") {
+        setFlash();
     }
 }
 
@@ -371,6 +411,21 @@ void setRainbow() {
         pixels.show();
 
         colorOffset++;
+        previousMillis = millis();
+    }
+}
+
+
+void setFlash() {
+    if (millis() - previousMillis > interval * 2) {
+        if (flashCycle) {
+            setAllColor(red, green, blue, white);
+            flashCycle = false;
+        } else {
+            setOff();
+            flashCycle = true;
+        }
+
         previousMillis = millis();
     }
 }

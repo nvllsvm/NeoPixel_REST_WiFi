@@ -52,7 +52,20 @@ A fading rainbow pattern.
 
 Key |  Type | Valid Values | Default | Description
 --- | --- | --- | --- | ---
-interval | integer | 0 through 255 | 50 | Speed the rainbow changes at
+interval | integer | 0 through 255 | 50 | Speed the rainbow changes
+brightness | integer | 0 through 255 | 255 | Brightness of all NeoPixels
+
+
+##### Mode: `flash`
+Flashing color.
+
+Key |  Type | Valid Values | Default | Description
+--- | --- | --- | --- | ---
+red | integer |0 through 255 | 0 | Red subpixel
+blue | integer | 0 through 255 | 0 | Blue subpixel
+green | integer | 0 through 255 | 0 | Green subpixel
+white | integer | 0 through 255 | 0 | White subpixel (only displayed/accepted for configurations which have it)
+interval | integer | 0 through 255 | 50 | Speed the color flashes
 brightness | integer | 0 through 255 | 255 | Brightness of all NeoPixels
 
 
