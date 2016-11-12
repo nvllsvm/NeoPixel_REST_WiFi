@@ -5,15 +5,18 @@ REST API for controlling NeoPixel strips on WiFi enabled, Arudino-compatible dev
 
 A few constants must be modified before installing on a device.
 
+### `neopixel_config.h`
 Name | Description
 --- | ---
 PIN | Digital PIN which controls the NeoPixels
 NUMPIXELS | Number of connected NeoPixels
-SSID | WiFi network name
-PASSWORD | Password
 STRIP_TYPE | Organization of the NeoPixel subpixels
 
-
+### `wifi_config.h`
+Name | Description
+--- | ---
+SSID | WiFi network name
+PASSWORD | Password
 
 ## API
 

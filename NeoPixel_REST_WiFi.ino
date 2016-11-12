@@ -10,15 +10,10 @@
 #include <ArduinoJson.h>
 #include <WiFi101.h>
 
+#include "neopixel_config.h"
+#include "wifi_config.h"
+
 const String VERSION = "0.1.0";
-
-const byte PIN = 12;
-const short NUMPIXELS = 60;
-
-const char SSID[] = "";
-const char PASSWORD[] = "";
-
-const int STRIP_TYPE = NEO_GRBW;
 
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, STRIP_TYPE + NEO_KHZ800);
