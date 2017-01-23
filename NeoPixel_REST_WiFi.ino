@@ -46,9 +46,21 @@ byte green;
 byte white;
 byte interval;
 bool flashCycle;
+int currentPixel;
+bool forwardDirection;
 
 bool isValidBody;
 String error;
+
+int stripeLength = 12;
+uint32_t colors[] = {
+    pixels.Color(255, 0, 255),
+    pixels.Color(0, 255, 255),
+    pixels.Color(0, 0, 255),
+    pixels.Color(255, 255, 255)
+};
+
+const byte numColors = sizeof(colors) / sizeof(colors[0]);
 
 const String ERROR_VALUE_ERROR = "ValueError";
 const String ERROR_NO_COLOR = "NoColor";
@@ -104,6 +116,9 @@ void writeStatus(WiFiClient client) {
             root["white"] = white;
         }
 
+        root["interval"] = interval;
+        root["brightness"] = brightness;
+    } else if (mode == "stripe") {
         root["interval"] = interval;
         root["brightness"] = brightness;
     }
@@ -244,6 +259,17 @@ bool parseBody(String body) {
             interval = bodyInterval;
             brightness = bodyBrightness;
         }
+    } else if (bodyMode == "stripe") {
+        byte bodyInterval = validateIntIsByte(root, "interval", 50);
+        byte bodyBrightness = validateIntIsByte(root, "brightness", 255);
+
+        if (isValidBody) {
+            mode = bodyMode;
+            interval = bodyInterval;
+            brightness = bodyBrightness;
+            currentPixel = 0;
+            forwardDirection = true;
+        }
     } else if (bodyMode == "off") {
         mode = bodyMode;
     } else {
@@ -369,6 +395,8 @@ void setNeoPixels() {
         setRainbow();
     } else if (mode == "flash") {
         setFlash();
+    } else if (mode == "stripe") {
+        setStripe();
     }
 }
 
@@ -428,4 +456,101 @@ void setFlash() {
 
         previousMillis = millis();
     }
+}
+
+
+void setStripe() {
+    if (millis() - previousMillis > interval * 2) {
+        if (currentPixel == 0 and !forwardDirection) {
+            forwardDirection = true;
+        } else if (currentPixel == pixels.numPixels()) {
+            forwardDirection = false;
+            currentPixel--;
+        }
+
+        setStuff(colors, numColors, currentPixel);
+
+        if (forwardDirection) {
+            currentPixel++;
+        } else {
+            currentPixel--;
+        }
+
+        previousMillis = millis();
+    }
+}
+
+
+uint8_t splitColor ( uint32_t c, char value ) {
+  switch ( value ) {
+    case 'r': return (uint8_t)(c >> 16);
+    case 'g': return (uint8_t)(c >>  8);
+    case 'b': return (uint8_t)(c >>  0);
+    default:  return 0;
+  }
+}
+
+
+void setStuff(uint32_t colors[], byte numColors, int i) {
+    int count = stripeLength;
+
+    byte state = 0;
+    for (int y = 0; y < pixels.numPixels(); y++) {
+        int pixel;
+        if (y + i >= pixels.numPixels()) {
+            pixel = (y+i) - pixels.numPixels();
+        } else {
+            pixel = y + i;
+        }
+        uint32_t blend_color;
+        uint32_t color;
+        count--;
+
+        if (count == 0) {
+            state++;
+            if (state == numColors) {
+                state = 0;
+            }
+            count = stripeLength;
+        }
+
+        byte multiplier_a;
+
+        if (count < (stripeLength / 2)) {
+          multiplier_a = count;
+          if (state == 0) {
+            blend_color = colors[numColors - 1];
+          } else {
+            blend_color = colors[state - 1];
+          }
+        } else {
+          multiplier_a = count - (stripeLength / 2);
+          if (state == (numColors - 1)) {
+            blend_color = colors[0];
+          } else {
+            blend_color = colors[state + 1];
+          }
+        }
+
+        float multiplier = 0.5 + (multiplier_a * (0.5 / (numColors / 2)));
+
+          byte r1 = splitColor(colors[state], 'r');
+          byte g1 = splitColor(colors[state], 'g');
+          byte b1 = splitColor(colors[state], 'b');
+          byte r2 = splitColor(blend_color, 'r');
+          byte g2 = splitColor(blend_color, 'g');
+          byte b2 = splitColor(blend_color, 'b');
+          Serial.println(r1);
+
+          byte r = ((r1 * multiplier) + (r2 * (1 - multiplier))) / 2;
+          byte g = ((g1 * multiplier) + (g2 * (1 - multiplier))) / 2;
+          byte b = ((b1 * multiplier) + (b2 * (1 - multiplier))) / 2;
+
+          color = pixels.Color(r,g,b,0);
+        color = colors[state];
+        pixels.setPixelColor(pixel, color);
+    }
+
+    pixels.setBrightness(brightness);
+    pixels.show();
 }
