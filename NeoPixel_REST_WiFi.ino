@@ -305,6 +305,8 @@ void handleRequest(WiFiClient client) {
 							writeStatus(client);
 						} else if (method == "PUT") {
 							if (contentLength > 0) {
+                Serial.print("content lenght");
+                Serial.println(contentLength);
 								for (int i = 0; i < contentLength; i++) {
 									if (client.available()) {
 										char c = client.read();
